@@ -63,5 +63,5 @@ This repository includes a root-level `render.yaml` blueprint for Render.
 ### Important Notes
 - The Django app lives inside the `nagebaba/` directory.
 - Render is configured to use `nagebaba` as the app root.
-- Do not use SQLite in production on Render because the filesystem is ephemeral.
+- This app now requires PostgreSQL through `DATABASE_URL`. SQLite is not supported.
 - Uploaded media files will also not persist unless you later add external storage.

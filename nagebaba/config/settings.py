@@ -2,6 +2,7 @@ import os
 from pathlib import Path
 
 import dj_database_url
+from django.core.exceptions import ImproperlyConfigured
 
 BASE_DIR = Path(__file__).resolve().parent.parent
 
@@ -55,9 +56,13 @@ TEMPLATES = [
 
 WSGI_APPLICATION = 'config.wsgi.application'
 
+database_url = os.environ.get('DATABASE_URL')
+if not database_url:
+    raise ImproperlyConfigured('DATABASE_URL environment variable is required. SQLite is not supported.')
+
 DATABASES = {
     'default': dj_database_url.config(
-        default=os.environ.get('DATABASE_URL', f"sqlite:///{BASE_DIR / 'db.sqlite3'}"),
+        default=database_url,
         conn_max_age=600,
         conn_health_checks=True,
     )
