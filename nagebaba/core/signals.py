@@ -7,9 +7,9 @@ from django.dispatch import receiver
 
 @receiver(post_migrate)
 def ensure_default_superuser(sender, **kwargs):
-    username = os.environ.get('ADMIN_USERNAME', 'Nagebaba08')
-    email = os.environ.get('ADMIN_EMAIL', 'admin@nagebaba.com')
-    password = os.environ.get('ADMIN_PASSWORD', 'M@hesh@9405')
+    username = os.environ.get('ADMIN_USERNAME')
+    email = os.environ.get('ADMIN_EMAIL')
+    password = os.environ.get('ADMIN_PASSWORD')
 
     if not all([username, email, password]):
         return
