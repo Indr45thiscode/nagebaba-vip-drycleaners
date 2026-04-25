@@ -3,12 +3,6 @@ from pathlib import Path
 
 import dj_database_url
 
-from django.contrib.auth import get_user_model
-
-if os.environ.get("CREATE_SUPERUSER") == "1":
-    User = get_user_model()
-    if not User.objects.filter(username="admin").exists():
-        User.objects.create_superuser("admin", "admin@gmail.com", "admin123")
 BASE_DIR = Path(__file__).resolve().parent.parent
 
 SECRET_KEY = os.environ.get('SECRET_KEY', 'django-insecure-nagebaba-vip-dry-cleaners-2025')
