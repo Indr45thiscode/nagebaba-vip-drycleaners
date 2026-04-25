@@ -1,0 +1,27 @@
+services:
+  - type: web
+    name: nagebaba-vip-dry-cleaners
+    env: python
+    rootDir: nagebaba
+    buildCommand: pip install -r requirements.txt && python manage.py collectstatic --noinput
+    preDeployCommand: python manage.py migrate
+    startCommand: gunicorn config.wsgi:application
+    autoDeploy: true
+    envVars:
+      - key: DEBUG
+        value: "False"
+      - key: SECRET_KEY
+        generateValue: true
+      - key: ALLOWED_HOSTS
+        value: .onrender.com
+      - key: CSRF_TRUSTED_ORIGINS
+        value: https://*.onrender.com
+      - key: DATABASE_URL
+        fromDatabase:
+          name: nagebaba-vip-db
+          property: connectionString
+
+databases:
+  - name: nagebaba-vip-db
+    databaseName: nagebaba_vip
+    user: nagebaba_vip
