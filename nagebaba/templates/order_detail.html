@@ -1,0 +1,147 @@
+{% extends 'base.html' %}
+{% block title %}{{ order.order_number }} - NAGEBABA VIP DRY CLEANERS{% endblock %}
+{% block content %}
+<div class="mx-auto max-w-6xl space-y-6">
+  <section class="card">
+    <div class="flex flex-col gap-4 lg:flex-row lg:items-start lg:justify-between">
+      <div class="flex items-start gap-4">
+        <a href="/orders/" class="mt-1 rounded-2xl border border-slate-200/70 bg-white/80 p-3 text-slate-700 transition hover:bg-white dark:border-slate-700 dark:bg-slate-900/70 dark:text-slate-200">
+          <svg class="h-5 w-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7"/></svg>
+        </a>
+        <div>
+          <div class="section-kicker">Order Overview</div>
+          <h2 class="mt-2 page-title text-slate-900 dark:text-slate-100">{{ order.order_number }}</h2>
+          <p class="mt-2 muted">{{ order.order_date|date:"d M Y, h:i A" }}</p>
+        </div>
+      </div>
+      <div class="flex flex-wrap gap-3">
+        <span class="badge-{{ order.status }}">{{ order.get_status_display }}</span>
+        <span class="badge-{{ order.payment_status }}">{{ order.payment_status|title }}</span>
+        <a href="/orders/{{ order.pk }}/receipt/" target="_blank" class="btn-secondary">Print Receipt</a>
+      </div>
+    </div>
+  </section>
+
+  <section class="grid gap-6 xl:grid-cols-[1.1fr_0.9fr]">
+    <div class="space-y-6">
+      <div class="card">
+        <div class="section-kicker">Customer</div>
+        <div class="mt-3 flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between">
+          <div>
+            <div class="text-2xl font-extrabold text-slate-900 dark:text-slate-100">{{ order.customer.name }}</div>
+            <div class="mt-1 text-sm font-semibold muted">{{ order.customer.phone }}</div>
+            {% if order.customer.address %}<div class="mt-3 rounded-2xl border border-slate-200/70 px-4 py-3 text-sm muted dark:border-slate-700">{{ order.customer.address }}</div>{% endif %}
+          </div>
+          <a href="/customers/{{ order.customer.pk }}/" class="btn-secondary">Customer History</a>
+        </div>
+      </div>
+
+      <div class="card">
+        <div class="flex items-center justify-between">
+          <div>
+            <div class="section-kicker">Items</div>
+            <h3 class="mt-2 text-2xl font-extrabold text-slate-900 dark:text-slate-100">Order items</h3>
+          </div>
+          <div class="text-right">
+            <div class="text-xs font-extrabold uppercase tracking-[0.18em] muted">Total</div>
+            <div class="text-2xl font-extrabold text-red-600 dark:text-red-300">&#8377;{{ order.total_amount }}</div>
+          </div>
+        </div>
+        <div class="mt-5 space-y-3">
+          {% for item in order.items.all %}
+          <div class="flex items-center justify-between rounded-[1.35rem] border border-slate-200/70 bg-white/70 p-4 dark:border-slate-700 dark:bg-slate-900/60">
+            <div>
+              <div class="text-base font-extrabold text-slate-900 dark:text-slate-100">{{ item.item_name }}</div>
+              <div class="muted text-sm">{{ item.quantity }} &times; &#8377;{{ item.price }} each</div>
+            </div>
+            <div class="text-lg font-extrabold text-slate-900 dark:text-slate-100">&#8377;{{ item.total }}</div>
+          </div>
+          {% endfor %}
+        </div>
+      </div>
+    </div>
+
+    <div class="space-y-6">
+      <div class="card">
+        <div class="section-kicker">Order Status</div>
+        <h3 class="mt-2 text-2xl font-extrabold text-slate-900 dark:text-slate-100">Update workflow</h3>
+        <form method="post" action="/orders/{{ order.pk }}/status/" class="mt-5">
+          {% csrf_token %}
+          <div class="grid gap-3">
+            {% for val, label in order.STATUS_CHOICES %}
+            <label class="flex items-center justify-between rounded-[1.25rem] border border-slate-200/70 px-4 py-4 transition hover:bg-slate-50 dark:border-slate-700 dark:hover:bg-slate-900/60">
+              <div>
+                <div class="font-extrabold text-slate-900 dark:text-slate-100">{{ label }}</div>
+                <div class="muted text-xs">Set order workflow to {{ label|lower }}</div>
+              </div>
+              <input type="radio" name="status" value="{{ val }}" {% if order.status == val %}checked{% endif %} class="h-5 w-5 accent-red-600" onchange="this.form.submit()">
+            </label>
+            {% endfor %}
+          </div>
+        </form>
+        <div class="mt-5 space-y-3 rounded-[1.35rem] bg-slate-100/70 p-4 dark:bg-slate-900/60">
+          <div class="flex items-center justify-between">
+            <span class="text-sm font-bold muted">Delivery date</span>
+            <span class="text-sm font-extrabold text-slate-900 dark:text-slate-100">{{ order.delivery_date|date:"d M Y"|default:"Not scheduled" }}</span>
+          </div>
+          <div class="flex items-start justify-between gap-3">
+            <span class="text-sm font-bold muted">Notes</span>
+            <span class="max-w-[70%] text-right text-sm font-semibold text-slate-900 dark:text-slate-100">{{ order.notes|default:"No special notes" }}</span>
+          </div>
+        </div>
+      </div>
+
+      <div class="card">
+        <div class="section-kicker">Billing</div>
+        <h3 class="mt-2 text-2xl font-extrabold text-slate-900 dark:text-slate-100">Payment summary</h3>
+        <div class="mt-5 grid gap-4 sm:grid-cols-3">
+          <div class="rounded-[1.35rem] bg-slate-100/70 p-4 text-center dark:bg-slate-900/60">
+            <div class="text-xs font-extrabold uppercase tracking-[0.18em] muted">Total</div>
+            <div class="mt-2 text-2xl font-extrabold text-slate-900 dark:text-slate-100">&#8377;{{ order.total_amount }}</div>
+          </div>
+          <div class="rounded-[1.35rem] bg-emerald-50/70 p-4 text-center dark:bg-emerald-950/25">
+            <div class="text-xs font-extrabold uppercase tracking-[0.18em] text-emerald-600 dark:text-emerald-300">Paid</div>
+            <div class="mt-2 text-2xl font-extrabold text-emerald-600 dark:text-emerald-300">&#8377;{{ order.paid_amount }}</div>
+          </div>
+          <div class="rounded-[1.35rem] {% if order.balance > 0 %}bg-red-50/70 dark:bg-red-950/25{% else %}bg-emerald-50/70 dark:bg-emerald-950/25{% endif %} p-4 text-center">
+            <div class="text-xs font-extrabold uppercase tracking-[0.18em] {% if order.balance > 0 %}text-red-600 dark:text-red-300{% else %}text-emerald-600 dark:text-emerald-300{% endif %}">Balance</div>
+            <div class="mt-2 text-2xl font-extrabold {% if order.balance > 0 %}text-red-600 dark:text-red-300{% else %}text-emerald-600 dark:text-emerald-300{% endif %}">&#8377;{{ order.balance }}</div>
+          </div>
+        </div>
+
+        {% if order.payments.all %}
+        <div class="mt-5 space-y-3">
+          {% for p in order.payments.all %}
+          <div class="flex items-center justify-between rounded-[1.25rem] border border-slate-200/70 bg-white/70 px-4 py-3 dark:border-slate-700 dark:bg-slate-900/60">
+            <div>
+              <div class="font-extrabold text-slate-900 dark:text-slate-100">&#8377;{{ p.amount }}</div>
+              <div class="muted text-xs">{{ p.get_method_display }}</div>
+            </div>
+            <div class="text-sm font-semibold text-slate-700 dark:text-slate-200">{{ p.date|date:"d M Y, h:i A" }}</div>
+          </div>
+          {% endfor %}
+        </div>
+        {% endif %}
+
+        {% if order.balance > 0 %}
+        <form method="post" action="/orders/{{ order.pk }}/payment/" class="mt-6 space-y-4 border-t border-slate-200/70 pt-5 dark:border-slate-700">
+          {% csrf_token %}
+          <div class="section-kicker">Add Payment</div>
+          <div class="grid gap-4 md:grid-cols-2">
+            <input type="number" name="amount" max="{{ order.balance }}" step="0.01" placeholder="Amount" class="input-field" required>
+            <select name="method" class="input-field">
+              <option value="cash">Cash</option>
+              <option value="upi">UPI</option>
+              <option value="phonepe">PhonePe</option>
+              <option value="gpay">Google Pay</option>
+            </select>
+          </div>
+          <input type="text" name="notes" placeholder="Notes (optional)" class="input-field">
+          <button type="submit" class="btn-primary w-full">Record Payment</button>
+        </form>
+        {% endif %}
+      </div>
+    </div>
+  </section>
+</div>
+{% endblock %}

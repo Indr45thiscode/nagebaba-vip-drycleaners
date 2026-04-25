@@ -1,0 +1,108 @@
+{% extends 'base.html' %}
+{% block title %}Customers - NAGEBABA VIP DRY CLEANERS{% endblock %}
+{% block content %}
+<div class="space-y-6">
+  <section class="grid gap-4 xl:grid-cols-[1.2fr_0.8fr]">
+    <div class="card">
+      <div class="section-kicker">Customer Relationships</div>
+      <h2 class="mt-3 page-title text-slate-900 dark:text-slate-100">A cleaner, more premium customer desk.</h2>
+      <p class="mt-3 max-w-2xl muted">Search regular clients, understand spending, and keep contact details well organized for faster service.</p>
+      <div class="mt-5 flex flex-wrap gap-3">
+        <button onclick="document.getElementById('add-customer-modal').classList.remove('hidden')" class="btn-primary">Add Customer</button>
+        <a href="/orders/create/" class="btn-secondary">Create Order</a>
+      </div>
+    </div>
+    <div class="grid gap-4 sm:grid-cols-3 xl:grid-cols-1">
+      <div class="card metric-card"><div class="muted text-xs font-extrabold uppercase tracking-[0.2em]">Total Customers</div><div class="mt-3 text-3xl font-extrabold">{{ customer_count }}</div></div>
+      <div class="card metric-card"><div class="muted text-xs font-extrabold uppercase tracking-[0.2em]">New This Month</div><div class="mt-3 text-3xl font-extrabold text-emerald-600 dark:text-emerald-300">{{ new_this_month }}</div></div>
+      <div class="card metric-card"><div class="muted text-xs font-extrabold uppercase tracking-[0.2em]">Active Accounts</div><div class="mt-3 text-3xl font-extrabold text-red-600 dark:text-red-300">{{ active_customers }}</div></div>
+    </div>
+  </section>
+
+  <section class="card">
+    <div class="flex flex-col gap-4 lg:flex-row lg:items-end lg:justify-between">
+      <div>
+        <div class="section-kicker">Search</div>
+        <h3 class="mt-2 text-2xl font-extrabold text-slate-900 dark:text-slate-100">Customer list</h3>
+      </div>
+      <form method="get" class="flex w-full max-w-2xl flex-col gap-3 sm:flex-row">
+        <input type="text" name="q" value="{{ search }}" placeholder="Search by customer name or phone number" class="input-field flex-1">
+        <button type="submit" class="btn-primary">Search</button>
+        {% if search %}<a href="/customers/" class="btn-secondary">Clear</a>{% endif %}
+      </form>
+    </div>
+  </section>
+
+  <section class="grid gap-4 md:grid-cols-2 2xl:grid-cols-3">
+    {% for customer in customers %}
+    <a href="/customers/{{ customer.pk }}/" class="card card-soft transition hover:-translate-y-1 hover:shadow-lg">
+      <div class="flex items-start justify-between gap-4">
+        <div class="flex items-center gap-4">
+          <div class="flex h-14 w-14 items-center justify-center rounded-2xl bg-red-500/10 text-xl font-extrabold text-red-600 dark:text-red-300">{{ customer.name|first|upper }}</div>
+          <div>
+            <div class="text-lg font-extrabold text-slate-900 dark:text-slate-100">{{ customer.name }}</div>
+            <div class="muted text-sm">{{ customer.phone }}</div>
+          </div>
+        </div>
+        <div class="rounded-2xl bg-white/80 px-4 py-3 text-right dark:bg-slate-900/70">
+          <div class="text-xs font-extrabold uppercase tracking-[0.18em] muted">Spent</div>
+          <div class="mt-1 text-lg font-extrabold text-slate-900 dark:text-slate-100">&#8377;{{ customer.total_spent }}</div>
+        </div>
+      </div>
+      <div class="mt-5 grid gap-3 sm:grid-cols-2">
+        <div class="rounded-2xl bg-white/80 p-4 dark:bg-slate-900/70">
+          <div class="text-xs font-extrabold uppercase tracking-[0.18em] muted">Orders</div>
+          <div class="mt-2 text-2xl font-extrabold text-slate-900 dark:text-slate-100">{{ customer.orders.count }}</div>
+        </div>
+        <div class="rounded-2xl bg-white/80 p-4 dark:bg-slate-900/70">
+          <div class="text-xs font-extrabold uppercase tracking-[0.18em] muted">Last Visit</div>
+          <div class="mt-2 text-base font-extrabold text-slate-900 dark:text-slate-100">{% if customer.last_visit %}{{ customer.last_visit|date:"d M Y" }}{% else %}No orders yet{% endif %}</div>
+        </div>
+      </div>
+      {% if customer.address %}
+      <div class="mt-4 rounded-2xl border border-slate-200/70 px-4 py-3 text-sm muted dark:border-slate-700">{{ customer.address }}</div>
+      {% endif %}
+    </a>
+    {% empty %}
+    <div class="card md:col-span-2 2xl:col-span-3">
+      <div class="rounded-[1.5rem] border border-dashed border-slate-300/80 px-6 py-14 text-center dark:border-slate-700">
+        <div class="text-xl font-extrabold text-slate-900 dark:text-slate-100">No customers found</div>
+        <div class="mt-2 muted">Start building your customer database to make repeat service easier.</div>
+        <button onclick="document.getElementById('add-customer-modal').classList.remove('hidden')" class="btn-primary mt-5">Add Customer</button>
+      </div>
+    </div>
+    {% endfor %}
+  </section>
+</div>
+
+<div id="add-customer-modal" class="hidden fixed inset-0 z-50 flex items-center justify-center bg-slate-950/55 p-4">
+  <div class="card w-full max-w-lg">
+    <div class="flex items-center justify-between">
+      <div>
+        <div class="section-kicker">New Customer</div>
+        <h3 class="mt-2 text-2xl font-extrabold text-slate-900 dark:text-slate-100">Create profile</h3>
+      </div>
+      <button onclick="document.getElementById('add-customer-modal').classList.add('hidden')" class="rounded-full p-2 text-slate-400 transition hover:bg-slate-200/40 hover:text-slate-800 dark:hover:bg-slate-700/50 dark:hover:text-slate-100">&times;</button>
+    </div>
+    <form method="post" action="/customers/add/" class="mt-6 space-y-4">
+      {% csrf_token %}
+      <div>
+        <label class="mb-2 block text-sm font-bold text-slate-700 dark:text-slate-200">Name</label>
+        <input type="text" name="name" required placeholder="Customer full name" class="input-field">
+      </div>
+      <div>
+        <label class="mb-2 block text-sm font-bold text-slate-700 dark:text-slate-200">Phone</label>
+        <input type="tel" name="phone" required placeholder="Phone number" class="input-field">
+      </div>
+      <div>
+        <label class="mb-2 block text-sm font-bold text-slate-700 dark:text-slate-200">Address</label>
+        <input type="text" name="address" placeholder="Optional address" class="input-field">
+      </div>
+      <div class="flex justify-end gap-3 pt-2">
+        <button type="button" onclick="document.getElementById('add-customer-modal').classList.add('hidden')" class="btn-secondary">Cancel</button>
+        <button type="submit" class="btn-primary">Save Customer</button>
+      </div>
+    </form>
+  </div>
+</div>
+{% endblock %}

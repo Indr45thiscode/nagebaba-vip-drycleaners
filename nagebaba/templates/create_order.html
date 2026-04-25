@@ -1,0 +1,184 @@
+{% extends 'base.html' %}
+{% block title %}New Order - NAGEBABA VIP DRY CLEANERS{% endblock %}
+{% block content %}
+<div class="space-y-6">
+  <div>
+    <h2 class="text-3xl font-bold text-slate-900 dark:text-slate-100">New Order</h2>
+    <p class="mt-1 text-sm muted">Easy order form with simple fields and clear totals.</p>
+  </div>
+
+  <form method="post" id="orderForm" class="card space-y-6">
+    {% csrf_token %}
+
+    <div class="grid gap-4 md:grid-cols-2">
+      <div>
+        <label class="mb-2 block text-sm font-semibold text-slate-700 dark:text-slate-200">Customer Name</label>
+        <input type="text" name="name" id="cname" required placeholder="Customer name" class="input-field">
+      </div>
+      <div>
+        <label class="mb-2 block text-sm font-semibold text-slate-700 dark:text-slate-200">Phone</label>
+        <input type="tel" name="phone" id="phone" required placeholder="Phone number" class="input-field" oninput="lookupCustomer(this.value)">
+      </div>
+      <div class="md:col-span-2">
+        <label class="mb-2 block text-sm font-semibold text-slate-700 dark:text-slate-200">Address</label>
+        <input type="text" name="address" id="caddress" placeholder="Address" class="input-field">
+      </div>
+    </div>
+
+    <div id="customer-found" class="hidden rounded-lg border border-green-200 bg-green-50 px-4 py-3 text-sm font-semibold text-green-700 dark:border-green-900/40 dark:bg-green-950/20 dark:text-green-300">
+      Existing customer found
+    </div>
+
+    <div class="border-t border-slate-200 pt-6 dark:border-slate-700">
+      <div class="mb-4 flex items-center justify-between">
+        <h3 class="text-xl font-semibold text-slate-900 dark:text-slate-100">Items</h3>
+        <button type="button" onclick="addItem()" class="btn-primary">Add Item</button>
+      </div>
+      <div id="items-container" class="space-y-4"></div>
+    </div>
+
+    <div class="grid gap-4 md:grid-cols-2">
+      <div>
+        <label class="mb-2 block text-sm font-semibold text-slate-700 dark:text-slate-200">Delivery Date</label>
+        <input type="date" name="delivery_date" class="input-field">
+      </div>
+      <div>
+        <label class="mb-2 block text-sm font-semibold text-slate-700 dark:text-slate-200">Status</label>
+        <select name="status" class="input-field">
+          <option value="pending">Pending</option>
+          <option value="in_process">In Process</option>
+        </select>
+      </div>
+      <div>
+        <label class="mb-2 block text-sm font-semibold text-slate-700 dark:text-slate-200">Advance Amount</label>
+        <input type="number" name="advance_amount" min="0" step="0.01" placeholder="0.00" class="input-field">
+      </div>
+      <div>
+        <label class="mb-2 block text-sm font-semibold text-slate-700 dark:text-slate-200">Payment Method</label>
+        <select name="pay_method" class="input-field">
+          <option value="cash">Cash</option>
+          <option value="upi">UPI</option>
+          <option value="phonepe">PhonePe</option>
+          <option value="gpay">Google Pay</option>
+        </select>
+      </div>
+      <div class="md:col-span-2">
+        <label class="mb-2 block text-sm font-semibold text-slate-700 dark:text-slate-200">Notes</label>
+        <textarea name="notes" rows="3" placeholder="Any special instruction" class="input-field"></textarea>
+      </div>
+    </div>
+
+    <div class="flex flex-col items-end justify-between gap-4 border-t border-slate-200 pt-6 sm:flex-row dark:border-slate-700">
+      <div class="rounded-lg bg-slate-100 px-5 py-3 text-right dark:bg-slate-800">
+        <div class="text-sm font-semibold muted">Total</div>
+        <div class="text-3xl font-bold text-slate-900 dark:text-slate-100">&#8377;<span id="grand-total">0.00</span></div>
+      </div>
+      <div class="flex gap-3">
+        <a href="/orders/" class="btn-secondary">Cancel</a>
+        <button type="submit" class="btn-primary">Save Order</button>
+      </div>
+    </div>
+  </form>
+</div>
+
+<script>
+const ITEMS = {{ predefined_items|safe }};
+let itemCount = 0;
+
+function addItem() {
+  itemCount++;
+  const div = document.createElement('div');
+  div.id = `item-${itemCount}`;
+  div.className = 'rounded-lg border border-slate-200 p-4 dark:border-slate-700';
+  div.innerHTML = `
+    <div class="grid gap-4 md:grid-cols-5">
+      <div class="md:col-span-2">
+        <label class="mb-2 block text-sm font-semibold text-slate-700 dark:text-slate-200">Item</label>
+        <select onchange="setPrice(this, ${itemCount})" class="input-field">
+          <option value="">Select item</option>
+          ${ITEMS.map(i => `<option value="${i.name}" data-price="${i.price}">${i.name}</option>`).join('')}
+          <option value="other">Other</option>
+        </select>
+        <input type="text" name="item_name[]" id="item-name-${itemCount}" placeholder="Item name" class="input-field mt-2 hidden">
+      </div>
+      <div>
+        <label class="mb-2 block text-sm font-semibold text-slate-700 dark:text-slate-200">Quantity</label>
+        <input type="number" name="quantity[]" id="qty-${itemCount}" value="1" min="1" class="input-field" onchange="calcRow(${itemCount})">
+      </div>
+      <div>
+        <label class="mb-2 block text-sm font-semibold text-slate-700 dark:text-slate-200">Price</label>
+        <input type="number" name="price[]" id="price-${itemCount}" value="0" min="0" step="0.01" class="input-field" onchange="calcRow(${itemCount})">
+      </div>
+      <div>
+        <label class="mb-2 block text-sm font-semibold text-slate-700 dark:text-slate-200">Total</label>
+        <div id="row-total-${itemCount}" class="input-field bg-slate-50 text-center font-semibold dark:bg-slate-800">Rs. 0.00</div>
+      </div>
+    </div>
+    <div class="mt-3 text-right">
+      <button type="button" onclick="removeItem(${itemCount})" class="text-sm font-semibold text-red-600 dark:text-red-300">Remove</button>
+    </div>
+  `;
+  document.getElementById('items-container').appendChild(div);
+}
+
+function setPrice(select, id) {
+  const nameInput = document.getElementById(`item-name-${id}`);
+  if (select.value === 'other') {
+    nameInput.classList.remove('hidden');
+    nameInput.required = true;
+    nameInput.value = '';
+    document.getElementById(`price-${id}`).value = 0;
+  } else {
+    nameInput.classList.add('hidden');
+    nameInput.required = false;
+    nameInput.value = select.value;
+    const option = select.options[select.selectedIndex];
+    document.getElementById(`price-${id}`).value = option.dataset.price || 0;
+  }
+  calcRow(id);
+}
+
+function calcRow(id) {
+  const qty = parseFloat(document.getElementById(`qty-${id}`).value) || 0;
+  const price = parseFloat(document.getElementById(`price-${id}`).value) || 0;
+  const total = qty * price;
+  document.getElementById(`row-total-${id}`).textContent = `Rs. ${total.toFixed(2)}`;
+  calcTotal();
+}
+
+function calcTotal() {
+  let total = 0;
+  document.querySelectorAll('[id^="row-total-"]').forEach(el => {
+    total += parseFloat(el.textContent.replace('Rs.', '').trim()) || 0;
+  });
+  document.getElementById('grand-total').textContent = total.toFixed(2);
+}
+
+function removeItem(id) {
+  const row = document.getElementById(`item-${id}`);
+  if (row) {
+    row.remove();
+    calcTotal();
+  }
+}
+
+function lookupCustomer(phone) {
+  if (phone.length >= 10) {
+    fetch(`/customers/search/?phone=${phone}`)
+      .then(r => r.json())
+      .then(data => {
+        const banner = document.getElementById('customer-found');
+        if (data.found) {
+          document.getElementById('cname').value = data.name;
+          document.getElementById('caddress').value = data.address || '';
+          banner.classList.remove('hidden');
+        } else {
+          banner.classList.add('hidden');
+        }
+      });
+  }
+}
+
+addItem();
+</script>
+{% endblock %}

@@ -1,0 +1,90 @@
+{% extends 'base.html' %}
+{% block title %}Payments - NAGEBABA VIP DRY CLEANERS{% endblock %}
+{% block content %}
+<div class="space-y-6">
+  <section class="grid gap-4 xl:grid-cols-[1.15fr_0.85fr]">
+    <div class="card">
+      <div class="section-kicker">Cash Desk</div>
+      <h2 class="mt-3 page-title text-slate-900 dark:text-slate-100">Stay on top of collections and outstanding balances.</h2>
+      <p class="mt-3 max-w-2xl muted">See pending recovery first, then review recent payments in a clean finance view built for quick action.</p>
+    </div>
+    <div class="grid gap-4 sm:grid-cols-2">
+      <div class="card metric-card"><div class="muted text-xs font-extrabold uppercase tracking-[0.2em]">Recent Collected</div><div class="mt-3 text-3xl font-extrabold text-emerald-600 dark:text-emerald-300">&#8377;{{ payment_total }}</div></div>
+      <div class="card metric-card"><div class="muted text-xs font-extrabold uppercase tracking-[0.2em]">Pending Balance</div><div class="mt-3 text-3xl font-extrabold text-red-600 dark:text-red-300">&#8377;{{ pending_total }}</div></div>
+    </div>
+  </section>
+
+  {% if pending_list %}
+  <section class="card">
+    <div class="flex items-center justify-between">
+      <div>
+        <div class="section-kicker">Attention Needed</div>
+        <h3 class="mt-2 text-2xl font-extrabold text-slate-900 dark:text-slate-100">Pending balances</h3>
+      </div>
+      <div class="rounded-2xl bg-red-500/10 px-4 py-2 text-red-600 dark:text-red-300">
+        <div class="text-xs font-extrabold uppercase tracking-[0.18em]">Cases</div>
+        <div class="text-2xl font-extrabold">{{ pending_list|length }}</div>
+      </div>
+    </div>
+    <div class="mt-5 space-y-3">
+      {% for order in pending_list %}
+      <div class="flex flex-col gap-4 rounded-[1.35rem] border border-red-200/70 bg-red-50/70 p-4 dark:border-red-900/40 dark:bg-red-950/25 lg:flex-row lg:items-center lg:justify-between">
+        <div>
+          <div class="text-base font-extrabold text-slate-900 dark:text-slate-100">{{ order.order_number }} &middot; {{ order.customer.name }}</div>
+          <div class="muted mt-1 text-sm">{{ order.customer.phone }}</div>
+        </div>
+        <div class="flex items-center gap-4">
+          <div class="text-right">
+            <div class="text-xs font-extrabold uppercase tracking-[0.18em] text-red-600 dark:text-red-300">Due</div>
+            <div class="text-2xl font-extrabold text-red-600 dark:text-red-300">&#8377;{{ order.balance }}</div>
+          </div>
+          <a href="/orders/{{ order.pk }}/" class="btn-primary">Collect</a>
+        </div>
+      </div>
+      {% endfor %}
+    </div>
+  </section>
+  {% endif %}
+
+  <section class="card p-0">
+    <div class="flex items-center justify-between border-b border-slate-200/70 px-6 py-5 dark:border-slate-700">
+      <div>
+        <div class="section-kicker">Transactions</div>
+        <h3 class="mt-2 text-2xl font-extrabold text-slate-900 dark:text-slate-100">Recent payments</h3>
+      </div>
+      <div class="muted text-sm font-bold">{{ payments|length }} record{{ payments|length|pluralize }}</div>
+    </div>
+    <div class="table-shell border-0 rounded-none">
+      <table>
+        <thead>
+          <tr>
+            <th>Order</th>
+            <th>Customer</th>
+            <th>Amount</th>
+            <th>Method</th>
+            <th>Date</th>
+          </tr>
+        </thead>
+        <tbody>
+          {% for payment in payments %}
+          <tr>
+            <td><a href="/orders/{{ payment.order.pk }}/" class="font-extrabold text-red-600 dark:text-red-300">{{ payment.order.order_number }}</a></td>
+            <td>
+              <div class="font-bold text-slate-900 dark:text-slate-100">{{ payment.order.customer.name }}</div>
+              <div class="muted text-xs">{{ payment.order.customer.phone }}</div>
+            </td>
+            <td class="font-extrabold text-emerald-600 dark:text-emerald-300">&#8377;{{ payment.amount }}</td>
+            <td><span class="badge-in_process">{{ payment.get_method_display }}</span></td>
+            <td class="text-sm font-semibold text-slate-700 dark:text-slate-200">{{ payment.date|date:"d M Y, h:i A" }}</td>
+          </tr>
+          {% empty %}
+          <tr>
+            <td colspan="5" class="px-6 py-14 text-center muted">No payments recorded yet.</td>
+          </tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    </div>
+  </section>
+</div>
+{% endblock %}

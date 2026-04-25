@@ -1,0 +1,72 @@
+{% extends 'base.html' %}
+{% block title %}{{ customer.name }} - NAGEBABA VIP DRY CLEANERS{% endblock %}
+{% block content %}
+<div class="mx-auto max-w-5xl space-y-6">
+  <section class="card">
+    <div class="flex flex-col gap-4 lg:flex-row lg:items-start lg:justify-between">
+      <div class="flex items-start gap-4">
+        <a href="/customers/" class="mt-1 rounded-2xl border border-slate-200/70 bg-white/80 p-3 text-slate-700 transition hover:bg-white dark:border-slate-700 dark:bg-slate-900/70 dark:text-slate-200">
+          <svg class="h-5 w-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7"/></svg>
+        </a>
+        <div class="flex items-start gap-4">
+          <div class="flex h-16 w-16 items-center justify-center rounded-3xl bg-red-500/10 text-2xl font-extrabold text-red-600 dark:text-red-300">{{ customer.name|first|upper }}</div>
+          <div>
+            <div class="section-kicker">Customer Profile</div>
+            <h2 class="mt-2 page-title text-slate-900 dark:text-slate-100">{{ customer.name }}</h2>
+            <p class="mt-2 text-sm font-semibold muted">{{ customer.phone }}</p>
+          </div>
+        </div>
+      </div>
+      <a href="/orders/create/?phone={{ customer.phone }}" class="btn-primary">New Order</a>
+    </div>
+    {% if customer.address %}
+    <div class="mt-5 rounded-[1.35rem] border border-slate-200/70 px-4 py-4 text-sm muted dark:border-slate-700">{{ customer.address }}</div>
+    {% endif %}
+    <div class="mt-5 grid gap-4 sm:grid-cols-3">
+      <div class="rounded-[1.35rem] bg-slate-100/70 p-4 text-center dark:bg-slate-900/60">
+        <div class="text-xs font-extrabold uppercase tracking-[0.18em] muted">Total Orders</div>
+        <div class="mt-2 text-3xl font-extrabold text-slate-900 dark:text-slate-100">{{ customer.orders.count }}</div>
+      </div>
+      <div class="rounded-[1.35rem] bg-red-50/70 p-4 text-center dark:bg-red-950/25">
+        <div class="text-xs font-extrabold uppercase tracking-[0.18em] text-red-600 dark:text-red-300">Total Spent</div>
+        <div class="mt-2 text-3xl font-extrabold text-red-600 dark:text-red-300">&#8377;{{ customer.total_spent }}</div>
+      </div>
+      <div class="rounded-[1.35rem] bg-slate-100/70 p-4 text-center dark:bg-slate-900/60">
+        <div class="text-xs font-extrabold uppercase tracking-[0.18em] muted">Last Visit</div>
+        <div class="mt-2 text-lg font-extrabold text-slate-900 dark:text-slate-100">{% if customer.last_visit %}{{ customer.last_visit|date:"d M Y" }}{% else %}No visits yet{% endif %}</div>
+      </div>
+    </div>
+  </section>
+
+  <section class="card">
+    <div class="flex items-center justify-between">
+      <div>
+        <div class="section-kicker">History</div>
+        <h3 class="mt-2 text-2xl font-extrabold text-slate-900 dark:text-slate-100">Customer orders</h3>
+      </div>
+      <div class="muted text-sm font-bold">{{ orders|length }} record{{ orders|length|pluralize }}</div>
+    </div>
+    <div class="mt-5 space-y-3">
+      {% for order in orders %}
+      <a href="/orders/{{ order.pk }}/" class="block rounded-[1.35rem] border border-slate-200/70 bg-white/70 p-4 transition hover:-translate-y-0.5 dark:border-slate-700 dark:bg-slate-900/60">
+        <div class="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
+          <div>
+            <div class="text-base font-extrabold text-slate-900 dark:text-slate-100">{{ order.order_number }}</div>
+            <div class="muted mt-1 text-sm">{{ order.order_date|date:"d M Y" }} &middot; {{ order.items.count }} item{{ order.items.count|pluralize }}</div>
+          </div>
+          <div class="flex items-center gap-3">
+            <div class="text-right">
+              <div class="text-lg font-extrabold text-slate-900 dark:text-slate-100">&#8377;{{ order.total_amount }}</div>
+              <span class="badge-{{ order.payment_status }}">{{ order.payment_status|title }}</span>
+            </div>
+            <span class="badge-{{ order.status }}">{{ order.get_status_display }}</span>
+          </div>
+        </div>
+      </a>
+      {% empty %}
+      <div class="rounded-[1.35rem] border border-dashed border-slate-300/70 p-10 text-center muted dark:border-slate-700">No orders found for this customer yet.</div>
+      {% endfor %}
+    </div>
+  </section>
+</div>
+{% endblock %}

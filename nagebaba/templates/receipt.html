@@ -1,0 +1,110 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Receipt {{ order.order_number }}</title>
+<style>
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body {
+    font-family: "Courier New", monospace;
+    font-size: 12px;
+    width: 80mm;
+    max-width: 80mm;
+    margin: 0 auto;
+    padding: 10px 8px 20px;
+    color: #111827;
+    background: #ffffff;
+  }
+  .center { text-align: center; }
+  .line { border-top: 1px dashed #111827; margin: 8px 0; }
+  .row, .item-row, .total-row { display: flex; justify-content: space-between; gap: 8px; margin: 4px 0; }
+  .shop-name { font-size: 16px; font-weight: 700; letter-spacing: 1px; }
+  .subtitle { font-size: 11px; color: #4b5563; }
+  .bold { font-weight: 700; }
+  .total-row { font-size: 14px; font-weight: 700; }
+  .status {
+    margin-top: 8px;
+    padding: 6px;
+    text-align: center;
+    font-size: 12px;
+    font-weight: 700;
+    letter-spacing: 1px;
+    background: #111827;
+    color: #ffffff;
+  }
+  .balance { color: #b91c1c; font-weight: 700; }
+  .no-print { text-align: center; margin-top: 16px; }
+  .btn {
+    display: inline-block;
+    margin: 4px;
+    padding: 8px 16px;
+    border: none;
+    border-radius: 6px;
+    color: #ffffff;
+    font-size: 13px;
+    cursor: pointer;
+  }
+  .btn-print { background: #dc2626; }
+  .btn-close { background: #64748b; }
+  @media print {
+    @page { margin: 0; size: 80mm auto; }
+    .no-print { display: none; }
+  }
+</style>
+</head>
+<body>
+  <div class="center">
+    <div class="shop-name">NAGEBABA V.I.P</div>
+    <div class="shop-name">DRY CLEANERS</div>
+    <div class="subtitle">Quality Dry Cleaning Services</div>
+  </div>
+
+  <div class="line"></div>
+  <div class="row"><span>Order</span><span class="bold">{{ order.order_number }}</span></div>
+  <div class="row"><span>Date</span><span>{{ order.order_date|date:"d/m/Y" }}</span></div>
+  {% if order.delivery_date %}
+  <div class="row"><span>Delivery</span><span>{{ order.delivery_date|date:"d/m/Y" }}</span></div>
+  {% endif %}
+
+  <div class="line"></div>
+  <div class="bold" style="margin-bottom:4px;">Customer</div>
+  <div>{{ order.customer.name }}</div>
+  <div>{{ order.customer.phone }}</div>
+  {% if order.customer.address %}<div>{{ order.customer.address }}</div>{% endif %}
+
+  <div class="line"></div>
+  <div class="bold" style="margin-bottom:4px;">Items</div>
+  {% for item in order.items.all %}
+  <div class="item-row">
+    <span>{{ item.item_name }} ({{ item.quantity }})</span>
+    <span>Rs. {{ item.total }}</span>
+  </div>
+  {% endfor %}
+
+  <div class="line"></div>
+  <div class="total-row"><span>Total</span><span>Rs. {{ order.total_amount }}</span></div>
+  <div class="row"><span>Paid</span><span>Rs. {{ order.paid_amount }}</span></div>
+  {% if order.balance > 0 %}
+  <div class="row balance"><span>Balance Due</span><span>Rs. {{ order.balance }}</span></div>
+  {% endif %}
+
+  {% if order.notes %}
+  <div class="line"></div>
+  <div style="font-size:11px;">Note: {{ order.notes }}</div>
+  {% endif %}
+
+  <div class="status">
+    {% if order.payment_status == 'paid' %}Fully Paid{% elif order.payment_status == 'partial' %}Partial Payment{% else %}Payment Due{% endif %}
+  </div>
+
+  <div class="line"></div>
+  <div class="center subtitle">Thank you for your business.</div>
+  <div class="center subtitle">Visit again.</div>
+
+  <div class="no-print">
+    <button onclick="window.print()" class="btn btn-print">Print Receipt</button>
+    <button onclick="window.close()" class="btn btn-close">Close</button>
+  </div>
+</body>
+</html>

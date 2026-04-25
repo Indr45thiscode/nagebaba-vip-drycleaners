@@ -1,0 +1,95 @@
+<!DOCTYPE html>
+<html lang="en" class="light">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Login - NAGEBABA VIP DRY CLEANERS</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Manrope:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+<script src="https://cdn.tailwindcss.com"></script>
+<script>
+  tailwind.config = { darkMode: 'class' };
+  const storedTheme = localStorage.getItem('theme');
+  if (storedTheme) {
+    document.documentElement.className = storedTheme;
+  } else if (window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches) {
+    document.documentElement.className = 'dark';
+  }
+</script>
+<style>
+  body {
+    font-family: 'Manrope', sans-serif;
+    background:
+      radial-gradient(circle at top left, rgba(220, 38, 38, 0.16), transparent 26%),
+      radial-gradient(circle at right, rgba(59, 130, 246, 0.12), transparent 28%),
+      linear-gradient(135deg, #f8fafc 0%, #eef2ff 42%, #fff1f2 100%);
+  }
+  .dark body {
+    background:
+      radial-gradient(circle at top left, rgba(220, 38, 38, 0.16), transparent 24%),
+      radial-gradient(circle at right, rgba(59, 130, 246, 0.12), transparent 26%),
+      linear-gradient(135deg, #020617 0%, #0f172a 55%, #111827 100%);
+  }
+</style>
+</head>
+<body class="min-h-screen p-4 text-slate-900 dark:text-slate-100">
+  <div class="mx-auto flex min-h-screen max-w-6xl items-center">
+    <div class="grid w-full gap-6 lg:grid-cols-[1.05fr_0.95fr]">
+      <div class="hidden rounded-[2rem] bg-slate-950/90 p-10 text-white shadow-2xl lg:block">
+        <div class="inline-flex rounded-2xl bg-red-600 px-4 py-2 text-sm font-extrabold uppercase tracking-[0.22em]">VIP Laundry Suite</div>
+        <h1 class="mt-8 text-5xl font-extrabold leading-tight">Professional control for a faster dry cleaning business.</h1>
+        <p class="mt-5 max-w-xl text-base text-slate-300">Manage orders, customers, payments, and analytics from one modern dashboard designed to feel premium and operationally sharp.</p>
+        <div class="mt-10 grid gap-4 sm:grid-cols-2">
+          <div class="rounded-[1.5rem] border border-white/10 bg-white/5 p-5">
+            <div class="text-sm font-extrabold uppercase tracking-[0.18em] text-red-300">Orders</div>
+            <div class="mt-2 text-2xl font-extrabold">Faster tracking</div>
+            <div class="mt-2 text-sm text-slate-300">Keep delivery queues, work status, and receipts aligned.</div>
+          </div>
+          <div class="rounded-[1.5rem] border border-white/10 bg-white/5 p-5">
+            <div class="text-sm font-extrabold uppercase tracking-[0.18em] text-red-300">Analytics</div>
+            <div class="mt-2 text-2xl font-extrabold">Cleaner insight</div>
+            <div class="mt-2 text-sm text-slate-300">Understand profit, spending, and customer movement clearly.</div>
+          </div>
+        </div>
+      </div>
+
+      <div class="rounded-[2rem] border border-white/50 bg-white/80 p-8 shadow-2xl backdrop-blur-xl dark:border-slate-700 dark:bg-slate-900/80 lg:p-10">
+        <div class="mx-auto max-w-md">
+          <div class="flex items-center gap-4">
+            <div class="flex h-16 w-16 items-center justify-center rounded-3xl bg-gradient-to-br from-red-500 to-red-700 text-2xl font-extrabold text-white shadow-xl">N</div>
+            <div>
+              <div class="text-sm font-extrabold uppercase tracking-[0.24em] text-red-600 dark:text-red-300">NAGEBABA VIP</div>
+              <h2 class="mt-1 text-3xl font-extrabold text-slate-900 dark:text-slate-100">Welcome back</h2>
+            </div>
+          </div>
+          <p class="mt-4 muted text-sm text-slate-500 dark:text-slate-400">Sign in to access the owner dashboard and manage daily operations.</p>
+
+          {% if messages %}
+            {% for msg in messages %}
+            <div class="mt-5 rounded-2xl border border-red-200 bg-red-50 px-4 py-3 text-sm font-semibold text-red-700 dark:border-red-900/40 dark:bg-red-950/30 dark:text-red-300">{{ msg }}</div>
+            {% endfor %}
+          {% endif %}
+
+          <form method="post" class="mt-6 space-y-5">
+            {% csrf_token %}
+            <div>
+              <label class="mb-2 block text-sm font-bold text-slate-700 dark:text-slate-200">Username</label>
+              <input type="text" name="username" required class="w-full rounded-2xl border border-slate-200 bg-white px-4 py-3.5 text-sm font-semibold text-slate-900 outline-none transition focus:border-red-300 focus:ring-4 focus:ring-red-100 dark:border-slate-700 dark:bg-slate-950 dark:text-slate-100 dark:focus:ring-red-500/10" placeholder="Enter username">
+            </div>
+            <div>
+              <label class="mb-2 block text-sm font-bold text-slate-700 dark:text-slate-200">Password</label>
+              <input type="password" name="password" required class="w-full rounded-2xl border border-slate-200 bg-white px-4 py-3.5 text-sm font-semibold text-slate-900 outline-none transition focus:border-red-300 focus:ring-4 focus:ring-red-100 dark:border-slate-700 dark:bg-slate-950 dark:text-slate-100 dark:focus:ring-red-500/10" placeholder="Enter password">
+            </div>
+            <button type="submit" class="w-full rounded-2xl bg-gradient-to-r from-red-600 to-red-700 px-4 py-3.5 text-sm font-extrabold text-white shadow-xl transition hover:-translate-y-0.5 hover:brightness-105">
+              Sign In to Dashboard
+            </button>
+          </form>
+
+          <div class="mt-6 text-center text-xs font-bold uppercase tracking-[0.2em] text-slate-400">Professional dashboard for dry cleaning operations</div>
+        </div>
+      </div>
+    </div>
+  </div>
+</body>
+</html>

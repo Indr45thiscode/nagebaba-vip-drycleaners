@@ -1,0 +1,357 @@
+<!DOCTYPE html>
+<html lang="en" class="light">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>{% block title %}NAGEBABA VIP DRY CLEANERS{% endblock %}</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+<script src="https://cdn.tailwindcss.com"></script>
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+<script>
+  tailwind.config = {
+    darkMode: 'class',
+    theme: {
+      extend: {
+        colors: {
+          brand: {
+            50: '#eff6ff',
+            100: '#dbeafe',
+            500: '#3b82f6',
+            600: '#2563eb',
+            700: '#1d4ed8',
+          },
+        },
+      },
+    },
+  };
+</script>
+<style>
+  :root {
+    --bg: #edf2f7;
+    --surface: #ffffff;
+    --surface-soft: #f8fafc;
+    --text: #1e293b;
+    --muted: #64748b;
+    --line: #dbe3ee;
+    --brand: #2f7dd3;
+    --brand-dark: #2563eb;
+    --success: #16a34a;
+    --danger: #ef4444;
+    --warning: #f59e0b;
+    --shadow: 0 2px 10px rgba(15, 23, 42, 0.06);
+  }
+
+  .dark {
+    --bg: #0f172a;
+    --surface: #111827;
+    --surface-soft: #1f2937;
+    --text: #e5e7eb;
+    --muted: #94a3b8;
+    --line: #334155;
+    --brand: #3b82f6;
+    --brand-dark: #2563eb;
+    --shadow: 0 2px 12px rgba(0, 0, 0, 0.35);
+  }
+
+  body {
+    font-family: 'Inter', sans-serif;
+    background: var(--bg);
+    color: var(--text);
+  }
+
+  .card {
+    background: var(--surface);
+    border: 1px solid var(--line);
+    border-radius: 10px;
+    box-shadow: var(--shadow);
+    padding: 20px;
+  }
+
+  .sidebar-link {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    padding: 11px 14px;
+    border-radius: 8px;
+    color: var(--muted);
+    font-size: 14px;
+    font-weight: 600;
+    transition: 0.18s ease;
+  }
+
+  .sidebar-link:hover {
+    background: #eef4ff;
+    color: var(--brand-dark);
+  }
+
+  .dark .sidebar-link:hover {
+    background: #1e293b;
+  }
+
+  .sidebar-link.active {
+    background: var(--brand);
+    color: white;
+  }
+
+  .btn-primary,
+  .btn-secondary {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+    padding: 10px 16px;
+    border-radius: 8px;
+    font-size: 14px;
+    font-weight: 600;
+    transition: 0.18s ease;
+  }
+
+  .btn-primary {
+    background: var(--brand);
+    color: white;
+    border: 1px solid var(--brand);
+    box-shadow: 0 2px 8px rgba(37, 99, 235, 0.18);
+  }
+
+  .btn-primary:hover {
+    background: var(--brand-dark);
+    border-color: var(--brand-dark);
+  }
+
+  .btn-secondary {
+    background: var(--surface-soft);
+    color: var(--text);
+    border: 1px solid var(--line);
+  }
+
+  .btn-secondary:hover {
+    background: #e9eef5;
+  }
+
+  .dark .btn-secondary:hover {
+    background: #273449;
+  }
+
+  .input-field,
+  textarea.input-field,
+  select.input-field {
+    width: 100%;
+    padding: 10px 12px;
+    border: 1px solid var(--line);
+    border-radius: 8px;
+    background: white;
+    color: var(--text);
+    font-size: 14px;
+    outline: none;
+    transition: 0.18s ease;
+  }
+
+  .dark .input-field,
+  .dark textarea.input-field,
+  .dark select.input-field {
+    background: #0f172a;
+  }
+
+  .input-field:focus,
+  textarea.input-field:focus,
+  select.input-field:focus {
+    border-color: #93c5fd;
+    box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.12);
+  }
+
+  .filter-chip {
+    display: inline-flex;
+    align-items: center;
+    padding: 8px 14px;
+    border-radius: 999px;
+    border: 1px solid var(--line);
+    background: white;
+    color: var(--muted);
+    font-size: 13px;
+    font-weight: 600;
+  }
+
+  .dark .filter-chip {
+    background: #111827;
+  }
+
+  .filter-chip.active {
+    background: var(--brand);
+    color: white;
+    border-color: var(--brand);
+  }
+
+  .section-kicker {
+    font-size: 12px;
+    font-weight: 700;
+    color: var(--brand);
+    text-transform: uppercase;
+    letter-spacing: 0.08em;
+  }
+
+  .page-title {
+    font-size: 30px;
+    line-height: 1.1;
+    font-weight: 700;
+  }
+
+  .muted {
+    color: var(--muted);
+  }
+
+  .table-shell {
+    overflow-x: auto;
+    border: 1px solid var(--line);
+    border-radius: 10px;
+  }
+
+  .table-shell table {
+    width: 100%;
+    border-collapse: collapse;
+  }
+
+  .table-shell thead {
+    background: #f8fafc;
+  }
+
+  .dark .table-shell thead {
+    background: #1f2937;
+  }
+
+  .table-shell th,
+  .table-shell td {
+    padding: 12px 14px;
+    border-top: 1px solid var(--line);
+    text-align: left;
+    font-size: 14px;
+  }
+
+  .table-shell th {
+    border-top: 0;
+    font-size: 12px;
+    color: var(--muted);
+    text-transform: uppercase;
+    font-weight: 700;
+  }
+
+  .badge-pending,
+  .badge-in_process,
+  .badge-ready,
+  .badge-delivered,
+  .badge-paid,
+  .badge-partial,
+  .badge-unpaid {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    padding: 4px 10px;
+    border-radius: 6px;
+    font-size: 12px;
+    font-weight: 700;
+  }
+
+  .badge-pending { background: #fee2e2; color: #dc2626; }
+  .badge-in_process { background: #dbeafe; color: #2563eb; }
+  .badge-ready { background: #dcfce7; color: #15803d; }
+  .badge-delivered { background: #dcfce7; color: #15803d; }
+  .badge-paid { background: #dcfce7; color: #15803d; }
+  .badge-partial { background: #fef3c7; color: #b45309; }
+  .badge-unpaid { background: #fee2e2; color: #dc2626; }
+
+  @media print {
+    .no-print { display: none !important; }
+  }
+</style>
+</head>
+<body class="min-h-screen">
+
+{% block full_page %}
+<div class="flex min-h-screen">
+  <aside id="sidebar" class="no-print fixed inset-y-0 left-0 z-30 w-64 -translate-x-full border-r border-slate-200 bg-white transition-transform duration-300 dark:border-slate-700 dark:bg-slate-900 lg:translate-x-0">
+    <div class="border-b border-slate-200 bg-brand-600 px-5 py-4 text-white dark:border-slate-700">
+      <div class="flex items-center gap-3">
+        <div class="flex h-10 w-10 items-center justify-center rounded-md bg-white/15 text-lg font-bold">N</div>
+        <div>
+          <div class="text-sm font-bold">Dry Cleaning</div>
+          <div class="text-xs text-blue-100">Management System</div>
+        </div>
+      </div>
+    </div>
+    <nav class="space-y-1 p-4">
+      <a href="/" class="sidebar-link {% if request.resolver_match.url_name == 'dashboard' %}active{% endif %}">Dashboard</a>
+      <a href="/orders/" class="sidebar-link {% if 'order' in request.resolver_match.url_name %}active{% endif %}">Orders</a>
+      <a href="/customers/" class="sidebar-link {% if 'customer' in request.resolver_match.url_name %}active{% endif %}">Customers</a>
+      <a href="/payments/" class="sidebar-link {% if request.resolver_match.url_name == 'payments' %}active{% endif %}">Payments</a>
+      <a href="/expenses/" class="sidebar-link {% if request.resolver_match.url_name == 'expenses' %}active{% endif %}">Expenses</a>
+      <a href="/analytics/" class="sidebar-link {% if request.resolver_match.url_name == 'analytics' %}active{% endif %}">Analytics</a>
+    </nav>
+    <div class="mt-auto p-4">
+      <a href="/logout/" class="btn-secondary w-full">Logout</a>
+    </div>
+  </aside>
+
+  <div class="flex flex-1 flex-col lg:ml-64">
+    <header class="no-print border-b border-slate-200 bg-brand-600 px-4 py-3 text-white dark:border-slate-700">
+      <div class="flex items-center justify-between gap-3">
+        <div class="flex items-center gap-3">
+          <button onclick="toggleSidebar()" class="rounded-md bg-white/10 p-2 lg:hidden">
+            <svg class="h-5 w-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 12h16M4 18h16"/></svg>
+          </button>
+          <div class="text-lg font-semibold">Dry Cleaning Management System</div>
+        </div>
+        <div class="flex items-center gap-2">
+          <a href="/orders/create/" class="btn-primary hidden sm:inline-flex">New Order</a>
+          <span class="hidden text-sm sm:inline">{{ request.user.username }}</span>
+          <button onclick="toggleTheme()" class="rounded-md bg-white/10 p-2" title="Toggle theme">
+            <svg class="hidden h-5 w-5 dark:block" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 3v1m0 16v1m9-9h-1M4 12H3"/></svg>
+            <svg class="block h-5 w-5 dark:hidden" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M20.354 15.354A9 9 0 018.646 3.646"/></svg>
+          </button>
+        </div>
+      </div>
+    </header>
+
+    <div id="sidebar-overlay" class="fixed inset-0 z-20 hidden bg-black/40 lg:hidden" onclick="toggleSidebar()"></div>
+
+    {% if messages %}
+    <div class="no-print px-4 pt-4 lg:px-6">
+      {% for msg in messages %}
+      <div class="mb-3 flex items-center justify-between rounded-lg border px-4 py-3 text-sm {% if msg.tags == 'error' %}border-red-200 bg-red-50 text-red-700 dark:border-red-900/40 dark:bg-red-950/20 dark:text-red-300{% else %}border-green-200 bg-green-50 text-green-700 dark:border-green-900/40 dark:bg-green-950/20 dark:text-green-300{% endif %}">
+        <span>{{ msg }}</span>
+        <button onclick="this.parentElement.remove()">&times;</button>
+      </div>
+      {% endfor %}
+    </div>
+    {% endif %}
+
+    <main class="flex-1 p-4 lg:p-6">
+      {% block content %}{% endblock %}
+    </main>
+  </div>
+</div>
+{% endblock %}
+
+<script>
+  const preferredTheme = localStorage.getItem('theme');
+  if (preferredTheme) {
+    document.documentElement.className = preferredTheme;
+  }
+
+  function toggleTheme() {
+    const html = document.documentElement;
+    const isDark = html.classList.contains('dark');
+    html.className = isDark ? 'light' : 'dark';
+    localStorage.setItem('theme', isDark ? 'light' : 'dark');
+  }
+
+  function toggleSidebar() {
+    const sidebar = document.getElementById('sidebar');
+    const overlay = document.getElementById('sidebar-overlay');
+    sidebar.classList.toggle('-translate-x-full');
+    overlay.classList.toggle('hidden');
+  }
+</script>
+{% block extra_js %}{% endblock %}
+</body>
+</html>

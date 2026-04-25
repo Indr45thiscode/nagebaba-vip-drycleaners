@@ -1,0 +1,4 @@
+django>=4.2,<5.0
+Pillow>=10.0
+psycopg2-binary>=2.9  # For PostgreSQL (optional, SQLite works by default)
+gunicorn>=21.0  # For production deployment
