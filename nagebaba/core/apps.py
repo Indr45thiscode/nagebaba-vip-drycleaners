@@ -13,9 +13,9 @@ class CoreConfig(AppConfig):
         if CoreConfig._admin_bootstrapped:
             return
 
-        username = os.environ.get('ADMIN_USERNAME')
-        email = os.environ.get('ADMIN_EMAIL')
-        password = os.environ.get('ADMIN_PASSWORD')
+        username = os.environ.get('ADMIN_USERNAME', 'Nagebaba08')
+        email = os.environ.get('ADMIN_EMAIL', 'admin@nagebaba.com')
+        password = os.environ.get('ADMIN_PASSWORD', 'M@hesh@9405')
 
         if not all([username, email, password]):
             return
