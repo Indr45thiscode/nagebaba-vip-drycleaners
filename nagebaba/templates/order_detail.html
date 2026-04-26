@@ -17,7 +17,12 @@
       <div class="flex flex-wrap gap-3">
         <span class="badge-{{ order.status }}">{{ order.get_status_display }}</span>
         <span class="badge-{{ order.payment_status }}">{{ order.payment_status|title }}</span>
+        <a href="/orders/{{ order.pk }}/edit/" class="btn-secondary">Edit Order</a>
         <a href="/orders/{{ order.pk }}/receipt/" target="_blank" class="btn-secondary">Print Receipt</a>
+        <form method="post" action="/orders/{{ order.pk }}/delete/" onsubmit="return confirm('Delete this order permanently?');">
+          {% csrf_token %}
+          <button type="submit" class="btn-secondary !border-red-200 !text-red-600 dark:!border-red-900/40 dark:!text-red-300">Delete Order</button>
+        </form>
       </div>
     </div>
   </section>
@@ -29,6 +34,7 @@
         <div class="mt-3 flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between">
           <div>
             <div class="text-2xl font-extrabold text-slate-900 dark:text-slate-100">{{ order.customer.name }}</div>
+            <div class="mt-1 text-xs font-extrabold uppercase tracking-[0.18em] text-red-600 dark:text-red-300">{{ order.customer.customer_code }}</div>
             <div class="mt-1 text-sm font-semibold muted">{{ order.customer.phone }}</div>
             {% if order.customer.address %}<div class="mt-3 rounded-2xl border border-slate-200/70 px-4 py-3 text-sm muted dark:border-slate-700">{{ order.customer.address }}</div>{% endif %}
           </div>

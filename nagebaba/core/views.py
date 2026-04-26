@@ -24,6 +24,73 @@ PREDEFINED_ITEMS = [
     {"name": "Jacket", "price": 90},
 ]
 
+
+def parse_customer_search_term(raw_value):
+    value = (raw_value or '').strip()
+    if not value:
+        return None
+    upper_value = value.upper()
+    if upper_value.startswith('CUST-'):
+        numeric_part = upper_value.replace('CUST-', '', 1)
+        if numeric_part.isdigit():
+            return int(numeric_part)
+    if value.isdigit():
+        return int(value)
+    return None
+
+
+def get_customer_for_order(request):
+    customer_id = parse_customer_search_term(
+        request.POST.get('customer_id') or request.GET.get('customer_id')
+    )
+    phone = (request.POST.get('phone') or request.GET.get('phone') or '').strip()
+    name = (request.POST.get('name') or '').strip()
+    address = (request.POST.get('address') or '').strip()
+
+    customer = None
+    if customer_id:
+        customer = get_object_or_404(Customer, pk=customer_id)
+        if phone and customer.phone != phone:
+            messages.error(request, 'This customer ID belongs to another phone number.')
+            return None
+    elif phone:
+        customer, _ = Customer.objects.get_or_create(phone=phone, defaults={'name': name, 'address': address})
+    else:
+        messages.error(request, 'Customer phone is required.')
+        return None
+
+    updated = False
+    if name and customer.name != name:
+        customer.name = name
+        updated = True
+    if address != customer.address:
+        customer.address = address
+        updated = True
+    if phone and customer.phone != phone:
+        customer.phone = phone
+        updated = True
+    if updated:
+        customer.save()
+    return customer
+
+
+def save_order_items(order, request):
+    order.items.all().delete()
+    item_names = request.POST.getlist('item_name[]')
+    quantities = request.POST.getlist('quantity[]')
+    prices = request.POST.getlist('price[]')
+    total = 0
+    for i, iname in enumerate(item_names):
+        iname = (iname or '').strip()
+        if iname:
+            qty = int(quantities[i]) if i < len(quantities) and quantities[i] else 1
+            price = float(prices[i]) if i < len(prices) and prices[i] else 0
+            oi = OrderItem(order=order, item_name=iname, quantity=qty, price=price)
+            oi.save()
+            total += oi.total
+    order.total_amount = total
+    order.save(update_fields=['total_amount'])
+
 def login_view(request):
     if request.user.is_authenticated:
         return redirect('dashboard')
@@ -83,7 +150,11 @@ def orders_list(request):
     if status_filter:
         qs = qs.filter(status=status_filter)
     if search:
-        qs = qs.filter(Q(customer__name__icontains=search) | Q(customer__phone__icontains=search) | Q(order_number__icontains=search))
+        customer_id = parse_customer_search_term(search)
+        query = Q(customer__name__icontains=search) | Q(customer__phone__icontains=search) | Q(order_number__icontains=search)
+        if customer_id:
+            query |= Q(customer__pk=customer_id)
+        qs = qs.filter(query)
     if date_filter == 'today':
         qs = qs.filter(order_date__date=timezone.localdate())
 
@@ -108,33 +179,15 @@ def orders_list(request):
 @login_required
 def create_order(request):
     if request.method == 'POST':
-        phone = request.POST.get('phone')
-        name = request.POST.get('name')
-        address = request.POST.get('address', '')
         delivery_date = request.POST.get('delivery_date') or None
         notes = request.POST.get('notes', '')
         status = request.POST.get('status', 'pending')
-        customer, _ = Customer.objects.get_or_create(phone=phone, defaults={'name': name, 'address': address})
-        if customer.name != name and name:
-            customer.name = name
-            customer.save()
-
+        customer = get_customer_for_order(request)
+        if not customer:
+            return redirect('create_order')
         order = Order(customer=customer, delivery_date=delivery_date, notes=notes, status=status)
         order.save()
-
-        item_names = request.POST.getlist('item_name[]')
-        quantities = request.POST.getlist('quantity[]')
-        prices = request.POST.getlist('price[]')
-        total = 0
-        for i, iname in enumerate(item_names):
-            if iname:
-                qty = int(quantities[i]) if quantities[i] else 1
-                price = float(prices[i]) if prices[i] else 0
-                oi = OrderItem(order=order, item_name=iname, quantity=qty, price=price)
-                oi.save()
-                total += oi.total
-        order.total_amount = total
-        order.save()
+        save_order_items(order, request)
 
         # advance payment
         advance = request.POST.get('advance_amount', '0')
@@ -144,13 +197,47 @@ def create_order(request):
 
         messages.success(request, f'Order {order.order_number} created!')
         return redirect('order_detail', pk=order.pk)
+    initial_customer = None
+    customer_id = parse_customer_search_term(request.GET.get('customer_id'))
+    if customer_id:
+        initial_customer = Customer.objects.filter(pk=customer_id).first()
+    elif request.GET.get('phone'):
+        initial_customer = Customer.objects.filter(phone=request.GET.get('phone')).first()
     customers = Customer.objects.all().order_by('name')
-    return render(request, 'create_order.html', {'customers': customers, 'predefined_items': PREDEFINED_ITEMS})
+    return render(request, 'create_order.html', {
+        'customers': customers,
+        'predefined_items': PREDEFINED_ITEMS,
+        'initial_customer': initial_customer,
+    })
 
 @login_required
 def order_detail(request, pk):
     order = get_object_or_404(Order, pk=pk)
     return render(request, 'order_detail.html', {'order': order, 'predefined_items': PREDEFINED_ITEMS})
+
+
+@login_required
+def edit_order(request, pk):
+    order = get_object_or_404(Order, pk=pk)
+    if request.method == 'POST':
+        customer = get_customer_for_order(request)
+        if not customer:
+            return redirect('edit_order', pk=pk)
+        order.customer = customer
+        order.delivery_date = request.POST.get('delivery_date') or None
+        order.notes = request.POST.get('notes', '')
+        order.status = request.POST.get('status', order.status)
+        order.save()
+        save_order_items(order, request)
+        messages.success(request, f'Order {order.order_number} updated!')
+        return redirect('order_detail', pk=order.pk)
+
+    return render(request, 'create_order.html', {
+        'order': order,
+        'predefined_items': PREDEFINED_ITEMS,
+        'initial_customer': order.customer,
+        'is_edit': True,
+    })
 
 @login_required
 def update_order_status(request, pk):
@@ -161,6 +248,20 @@ def update_order_status(request, pk):
         if request.headers.get('X-Requested-With') == 'XMLHttpRequest':
             return JsonResponse({'status': order.status, 'status_display': order.get_status_display()})
     return redirect('order_detail', pk=pk)
+
+
+@login_required
+@require_POST
+def delete_order(request, pk):
+    order = get_object_or_404(Order, pk=pk)
+    order_number = order.order_number
+    customer_pk = order.customer.pk
+    order.delete()
+    messages.success(request, f'Order {order_number} deleted!')
+    next_url = request.POST.get('next')
+    if next_url == 'customer':
+        return redirect('customer_detail', pk=customer_pk)
+    return redirect('orders')
 
 @login_required
 def add_payment(request, pk):
@@ -184,7 +285,11 @@ def customers_list(request):
     search = request.GET.get('q', '')
     qs = Customer.objects.all().order_by('name')
     if search:
-        qs = qs.filter(Q(name__icontains=search) | Q(phone__icontains=search))
+        customer_id = parse_customer_search_term(search)
+        query = Q(name__icontains=search) | Q(phone__icontains=search)
+        if customer_id:
+            query |= Q(pk=customer_id)
+        qs = qs.filter(query)
     customers = list(qs)
     month_start = timezone.localdate().replace(day=1)
     return render(request, 'customers.html', {
@@ -216,11 +321,26 @@ def add_customer(request):
     return redirect('customers')
 
 @login_required
-def get_customer_by_phone(request):
-    phone = request.GET.get('phone', '')
+def customer_search(request):
+    phone = (request.GET.get('phone') or '').strip()
+    query_value = request.GET.get('q', '')
+    customer_id = parse_customer_search_term(query_value)
     try:
-        c = Customer.objects.get(phone=phone)
-        return JsonResponse({'found': True, 'name': c.name, 'address': c.address, 'id': c.id})
+        if customer_id:
+            c = Customer.objects.get(pk=customer_id)
+        else:
+            c = Customer.objects.get(phone=phone)
+        return JsonResponse({
+            'found': True,
+            'name': c.name,
+            'address': c.address,
+            'id': c.id,
+            'customer_code': c.customer_code,
+            'phone': c.phone,
+            'orders_count': c.orders.count(),
+            'detail_url': f'/customers/{c.pk}/',
+            'new_order_url': f'/orders/create/?customer_id={c.customer_code}',
+        })
     except Customer.DoesNotExist:
         return JsonResponse({'found': False})
 

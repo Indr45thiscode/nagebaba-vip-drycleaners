@@ -12,6 +12,10 @@ class Customer(models.Model):
     def __str__(self):
         return f"{self.name} ({self.phone})"
 
+    @property
+    def customer_code(self):
+        return f"CUST-{self.pk:04d}" if self.pk else "CUST-NEW"
+
     def total_spent(self):
         return sum(order.total_amount for order in self.orders.all())
 

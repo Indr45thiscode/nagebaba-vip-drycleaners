@@ -1,27 +1,44 @@
 {% extends 'base.html' %}
-{% block title %}New Order - NAGEBABA VIP DRY CLEANERS{% endblock %}
+{% block title %}{% if is_edit %}Edit Order{% else %}New Order{% endif %} - NAGEBABA VIP DRY CLEANERS{% endblock %}
 {% block content %}
 <div class="space-y-6">
   <div>
-    <h2 class="text-3xl font-bold text-slate-900 dark:text-slate-100">New Order</h2>
-    <p class="mt-1 text-sm muted">Easy order form with simple fields and clear totals.</p>
+    <h2 class="text-3xl font-bold text-slate-900 dark:text-slate-100">{% if is_edit %}Edit Order {{ order.order_number }}{% else %}New Order{% endif %}</h2>
+    <p class="mt-1 text-sm muted">Customer search, unique ID lookup, and simple item entry in one place.</p>
   </div>
 
   <form method="post" id="orderForm" class="card space-y-6">
     {% csrf_token %}
+    <input type="hidden" name="customer_id" id="customer-id" value="{% if initial_customer %}{{ initial_customer.customer_code }}{% endif %}">
+
+    <div class="grid gap-4 md:grid-cols-2">
+      <div>
+        <label class="mb-2 block text-sm font-semibold text-slate-700 dark:text-slate-200">Customer Unique ID</label>
+        <div class="flex gap-2">
+          <input type="text" id="customer-search" value="{% if initial_customer %}{{ initial_customer.customer_code }}{% endif %}" placeholder="CUST-0001" class="input-field">
+          <button type="button" onclick="lookupCustomerById()" class="btn-secondary whitespace-nowrap">Search ID</button>
+        </div>
+        <p class="mt-2 text-xs muted">ID ne search kela ki customer details auto fill hotil.</p>
+      </div>
+      <div class="rounded-lg border border-slate-200 bg-slate-50 px-4 py-4 dark:border-slate-700 dark:bg-slate-900/60">
+        <div class="text-xs font-extrabold uppercase tracking-[0.18em] muted">Selected Customer</div>
+        <div id="selected-customer-code" class="mt-2 text-lg font-extrabold text-slate-900 dark:text-slate-100">{% if initial_customer %}{{ initial_customer.customer_code }}{% else %}New customer{% endif %}</div>
+        <div id="selected-customer-meta" class="mt-1 text-sm muted">{% if initial_customer %}{{ initial_customer.name }}{% if initial_customer.phone %} | {{ initial_customer.phone }}{% endif %}{% else %}Unique ID order save jhalyavar permanent raheel.{% endif %}</div>
+      </div>
+    </div>
 
     <div class="grid gap-4 md:grid-cols-2">
       <div>
         <label class="mb-2 block text-sm font-semibold text-slate-700 dark:text-slate-200">Customer Name</label>
-        <input type="text" name="name" id="cname" required placeholder="Customer name" class="input-field">
+        <input type="text" name="name" id="cname" required placeholder="Customer name" class="input-field" value="{% if initial_customer %}{{ initial_customer.name }}{% endif %}">
       </div>
       <div>
         <label class="mb-2 block text-sm font-semibold text-slate-700 dark:text-slate-200">Phone</label>
-        <input type="tel" name="phone" id="phone" required placeholder="Phone number" class="input-field" oninput="lookupCustomer(this.value)">
+        <input type="tel" name="phone" id="phone" required placeholder="Phone number" class="input-field" oninput="lookupCustomerByPhone(this.value)" value="{% if initial_customer %}{{ initial_customer.phone }}{% endif %}">
       </div>
       <div class="md:col-span-2">
         <label class="mb-2 block text-sm font-semibold text-slate-700 dark:text-slate-200">Address</label>
-        <input type="text" name="address" id="caddress" placeholder="Address" class="input-field">
+        <input type="text" name="address" id="caddress" placeholder="Address" class="input-field" value="{% if initial_customer %}{{ initial_customer.address }}{% endif %}">
       </div>
     </div>
 
@@ -40,15 +57,18 @@
     <div class="grid gap-4 md:grid-cols-2">
       <div>
         <label class="mb-2 block text-sm font-semibold text-slate-700 dark:text-slate-200">Delivery Date</label>
-        <input type="date" name="delivery_date" class="input-field">
+        <input type="date" name="delivery_date" class="input-field" value="{% if order and order.delivery_date %}{{ order.delivery_date|date:'Y-m-d' }}{% endif %}">
       </div>
       <div>
         <label class="mb-2 block text-sm font-semibold text-slate-700 dark:text-slate-200">Status</label>
         <select name="status" class="input-field">
-          <option value="pending">Pending</option>
-          <option value="in_process">In Process</option>
+          <option value="pending" {% if order.status == 'pending' or not order %}selected{% endif %}>Pending</option>
+          <option value="in_process" {% if order.status == 'in_process' %}selected{% endif %}>In Process</option>
+          <option value="ready" {% if order.status == 'ready' %}selected{% endif %}>Ready</option>
+          <option value="delivered" {% if order.status == 'delivered' %}selected{% endif %}>Delivered</option>
         </select>
       </div>
+      {% if not is_edit %}
       <div>
         <label class="mb-2 block text-sm font-semibold text-slate-700 dark:text-slate-200">Advance Amount</label>
         <input type="number" name="advance_amount" min="0" step="0.01" placeholder="0.00" class="input-field">
@@ -62,9 +82,10 @@
           <option value="gpay">Google Pay</option>
         </select>
       </div>
+      {% endif %}
       <div class="md:col-span-2">
         <label class="mb-2 block text-sm font-semibold text-slate-700 dark:text-slate-200">Notes</label>
-        <textarea name="notes" rows="3" placeholder="Any special instruction" class="input-field"></textarea>
+        <textarea name="notes" rows="3" placeholder="Any special instruction" class="input-field">{% if order %}{{ order.notes }}{% endif %}</textarea>
       </div>
     </div>
 
@@ -74,8 +95,8 @@
         <div class="text-3xl font-bold text-slate-900 dark:text-slate-100">&#8377;<span id="grand-total">0.00</span></div>
       </div>
       <div class="flex gap-3">
-        <a href="/orders/" class="btn-secondary">Cancel</a>
-        <button type="submit" class="btn-primary">Save Order</button>
+        <a href="{% if is_edit %}/orders/{{ order.pk }}/{% else %}/orders/{% endif %}" class="btn-secondary">Cancel</a>
+        <button type="submit" class="btn-primary">{% if is_edit %}Update Order{% else %}Save Order{% endif %}</button>
       </div>
     </div>
   </form>
@@ -86,6 +107,10 @@ const ITEMS = {{ predefined_items|safe }};
 let itemCount = 0;
 
 function addItem() {
+  return addItemWithValues();
+}
+
+function addItemWithValues(itemName = '', quantity = 1, price = 0) {
   itemCount++;
   const div = document.createElement('div');
   div.id = `item-${itemCount}`;
@@ -99,15 +124,15 @@ function addItem() {
           ${ITEMS.map(i => `<option value="${i.name}" data-price="${i.price}">${i.name}</option>`).join('')}
           <option value="other">Other</option>
         </select>
-        <input type="text" name="item_name[]" id="item-name-${itemCount}" placeholder="Item name" class="input-field mt-2 hidden">
+        <input type="text" name="item_name[]" id="item-name-${itemCount}" placeholder="Item name" class="input-field mt-2 hidden" value="${itemName}">
       </div>
       <div>
         <label class="mb-2 block text-sm font-semibold text-slate-700 dark:text-slate-200">Quantity</label>
-        <input type="number" name="quantity[]" id="qty-${itemCount}" value="1" min="1" class="input-field" onchange="calcRow(${itemCount})">
+        <input type="number" name="quantity[]" id="qty-${itemCount}" value="${quantity}" min="1" class="input-field" onchange="calcRow(${itemCount})">
       </div>
       <div>
         <label class="mb-2 block text-sm font-semibold text-slate-700 dark:text-slate-200">Price</label>
-        <input type="number" name="price[]" id="price-${itemCount}" value="0" min="0" step="0.01" class="input-field" onchange="calcRow(${itemCount})">
+        <input type="number" name="price[]" id="price-${itemCount}" value="${price}" min="0" step="0.01" class="input-field" onchange="calcRow(${itemCount})">
       </div>
       <div>
         <label class="mb-2 block text-sm font-semibold text-slate-700 dark:text-slate-200">Total</label>
@@ -119,6 +144,17 @@ function addItem() {
     </div>
   `;
   document.getElementById('items-container').appendChild(div);
+  const select = div.querySelector('select');
+  const matched = ITEMS.find(i => i.name === itemName);
+  if (matched) {
+    select.value = itemName;
+  } else if (itemName) {
+    select.value = 'other';
+    const nameInput = document.getElementById(`item-name-${itemCount}`);
+    nameInput.classList.remove('hidden');
+    nameInput.required = true;
+  }
+  calcRow(itemCount);
 }
 
 function setPrice(select, id) {
@@ -162,23 +198,77 @@ function removeItem(id) {
   }
 }
 
-function lookupCustomer(phone) {
+function applyCustomer(data) {
+  const banner = document.getElementById('customer-found');
+  document.getElementById('customer-id').value = data.customer_code || '';
+  document.getElementById('customer-search').value = data.customer_code || '';
+  document.getElementById('cname').value = data.name || '';
+  document.getElementById('phone').value = data.phone || '';
+  document.getElementById('caddress').value = data.address || '';
+  document.getElementById('selected-customer-code').textContent = data.customer_code || 'New customer';
+  document.getElementById('selected-customer-meta').textContent = `${data.name || ''}${data.phone ? ' | ' + data.phone : ''}${data.orders_count !== undefined ? ' | Orders: ' + data.orders_count : ''}`;
+  banner.textContent = `Existing customer found: ${data.customer_code}`;
+  banner.classList.remove('hidden');
+}
+
+function resetCustomerBanner() {
+  document.getElementById('customer-found').classList.add('hidden');
+  document.getElementById('customer-id').value = '';
+  document.getElementById('selected-customer-code').textContent = 'New customer';
+  document.getElementById('selected-customer-meta').textContent = 'Search by unique ID or phone to load an existing customer.';
+}
+
+function lookupCustomerByPhone(phone) {
   if (phone.length >= 10) {
     fetch(`/customers/search/?phone=${phone}`)
       .then(r => r.json())
       .then(data => {
-        const banner = document.getElementById('customer-found');
         if (data.found) {
-          document.getElementById('cname').value = data.name;
-          document.getElementById('caddress').value = data.address || '';
-          banner.classList.remove('hidden');
+          applyCustomer(data);
         } else {
-          banner.classList.add('hidden');
+          resetCustomerBanner();
         }
       });
+  } else {
+    resetCustomerBanner();
   }
 }
 
-addItem();
+function lookupCustomerById() {
+  const query = document.getElementById('customer-search').value.trim();
+  if (!query) {
+    resetCustomerBanner();
+    return;
+  }
+  fetch(`/customers/search/?q=${encodeURIComponent(query)}`)
+    .then(r => r.json())
+    .then(data => {
+      if (data.found) {
+        applyCustomer(data);
+      } else {
+        resetCustomerBanner();
+      }
+    });
+}
+
+{% if order %}
+{% for item in order.items.all %}
+addItemWithValues('{{ item.item_name|escapejs }}', {{ item.quantity }}, {{ item.price }});
+{% endfor %}
+{% else %}
+if (!document.getElementById('items-container').children.length) {
+  addItem();
+}
+{% endif %}
+
+{% if initial_customer %}
+applyCustomer({
+  customer_code: '{{ initial_customer.customer_code }}',
+  name: '{{ initial_customer.name|escapejs }}',
+  phone: '{{ initial_customer.phone|escapejs }}',
+  address: '{{ initial_customer.address|escapejs }}',
+  orders_count: {{ initial_customer.orders.count }}
+});
+{% endif %}
 </script>
 {% endblock %}
