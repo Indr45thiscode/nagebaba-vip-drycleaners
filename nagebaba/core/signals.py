@@ -15,5 +15,28 @@ def ensure_default_superuser(sender, **kwargs):
         return
 
     User = get_user_model()
-    if not User.objects.filter(username=username).exists():
-        User.objects.create_superuser(username=username, email=email, password=password)
+    user, created = User.objects.get_or_create(
+        username=username,
+        defaults={
+            'email': email,
+            'is_staff': True,
+            'is_superuser': True,
+        }
+    )
+
+    changed = created
+    if user.email != email:
+        user.email = email
+        changed = True
+    if not user.is_staff:
+        user.is_staff = True
+        changed = True
+    if not user.is_superuser:
+        user.is_superuser = True
+        changed = True
+    if not user.check_password(password):
+        user.set_password(password)
+        changed = True
+
+    if changed:
+        user.save()

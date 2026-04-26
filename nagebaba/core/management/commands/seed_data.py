@@ -1,5 +1,4 @@
 from django.core.management.base import BaseCommand
-from django.contrib.auth.models import User
 from core.models import Customer, Order, OrderItem, Payment, Expense, Item
 from django.utils import timezone
 import datetime, random
@@ -8,10 +7,6 @@ class Command(BaseCommand):
     help = 'Seed sample data'
 
     def handle(self, *args, **kwargs):
-        if not User.objects.filter(username='admin').exists():
-            User.objects.create_superuser('admin', 'admin@nagebaba.com', 'admin123')
-            self.stdout.write('Created admin: admin / admin123')
-
         items_data = [('Saree',80),('Shirt',40),('Pant',40),('Saree Blouse',30),('Top',35),('Ghagra',60),('Coat/Blazer',100),('Blanket',120),('Mandap',500),('Cushion',50),('Shoes',80),('Jacket',90)]
         for name, price in items_data:
             Item.objects.get_or_create(name=name, defaults={'default_price': price})

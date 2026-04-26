@@ -15,14 +15,14 @@ pip install -r requirements.txt
 # 3. Apply migrations
 python manage.py migrate
 
-# 4. Seed sample data & create admin user
+# 4. Seed sample data
 python manage.py seed_data
 
 # 5. Start server
 python manage.py runserver
 
 # 6. Open browser: http://127.0.0.1:8000
-# Login: admin / admin123
+# Login: use ADMIN_USERNAME / ADMIN_PASSWORD from your environment
 ```
 
 ## Features
@@ -37,9 +37,9 @@ python manage.py runserver
 - Dark/Light theme toggle
 - Mobile responsive
 
-## Default Login
-- Username: `admin`
-- Password: `admin123`
+## Admin Login
+- Username: value from `ADMIN_USERNAME`
+- Password: value from `ADMIN_PASSWORD`
 
 ## Production Setup
 1. Set `SECRET_KEY`, `DEBUG=False`, `ALLOWED_HOSTS`, and `CSRF_TRUSTED_ORIGINS`
